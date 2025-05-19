@@ -1,6 +1,9 @@
+import SoftButton from '@/components/SoftButton';
+import Colors from '@/constants/Colors';
+import TextStyles from '@/constants/TextStyles';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import FadeTransition from '../../components/FadeTransition';
 
 const SendLetter = () => {
@@ -31,23 +34,23 @@ const SendLetter = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.introText}>这封信只需要你一个人的声音</Text>
-        <Text style={styles.title}>寄语远方</Text>
-        <Text style={styles.subtitle}>你的文字会找到它的归宿</Text>
+        <Text style={[TextStyles.introText, styles.introText]}>这封信只需要你一个人的声音</Text>
+        <Text style={TextStyles.title}>寄语远方</Text>
+        <Text style={[TextStyles.subtitle, styles.subtitle]}>你的文字会找到它的归宿</Text>
         
         <View style={styles.formContainer}>
-          <Text style={styles.label}>标题</Text>
+          <Text style={TextStyles.label}>标题</Text>
           <TextInput
-            style={styles.titleInput}
+            style={[TextStyles.input, styles.titleInput]}
             placeholder="这封信想被如何记住？"
             value={title}
             onChangeText={setTitle}
             maxLength={50}
           />
           
-          <Text style={styles.label}>内容</Text>
+          <Text style={TextStyles.label}>内容</Text>
           <TextInput
-            style={styles.contentInput}
+            style={[TextStyles.input, styles.contentInput]}
             placeholder="你想对世界说的悄悄话..."
             value={content}
             onChangeText={setContent}
@@ -56,13 +59,13 @@ const SendLetter = () => {
           />
         </View>
         
-        <TouchableOpacity 
-          style={[styles.button, !isFormValid && styles.buttonDisabled, isSubmitting && styles.buttonSubmitting]}
+        <SoftButton 
+          text="📮 让文字找到归处" 
+          loadingText="正在飘向远方..." 
           onPress={handleSubmit}
-          disabled={!isFormValid || isSubmitting}
-        >
-          <Text style={styles.buttonText}>{isSubmitting ? "正在飘向远方..." : "📮 让文字找到归处"}</Text>
-        </TouchableOpacity>
+          disabled={!isFormValid}
+          isLoading={isSubmitting}
+        />
         
         <FadeTransition 
           visible={showSuccessMessage} 
@@ -83,86 +86,34 @@ const SendLetter = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fdfaf6',
+    backgroundColor: Colors.light.background,
   },
   scrollContainer: {
     padding: 20,
     flexGrow: 1,
   },
   introText: {
-    fontSize: 16,
-    color: '#6e6e6e',
     textAlign: 'center',
-    marginBottom: 25,
-    fontStyle: 'italic',
-  },
-  title: {
-    fontFamily: 'PlayfairDisplay-Bold',
-    fontSize: 24,
-    marginBottom: 10,
-    color: '#3e3e3e',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6e6e6e',
     marginBottom: 30,
-    lineHeight: 22,
   },
   formContainer: {
     backgroundColor: 'white',
     borderRadius: 8,
     padding: 15,
     marginBottom: 30,
-    shadowColor: '#000',
+    shadowColor: Colors.light.textPrimary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#3e3e3e',
-  },
   titleInput: {
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    color: '#3e3e3e',
+    // 特定的覆盖样式（如有需要）
   },
   contentInput: {
-    borderWidth: 1,
-    borderColor: '#e8e8e8',
-    borderRadius: 6,
-    padding: 12,
-    fontSize: 16,
     height: 200,
-    color: '#3e3e3e',
-  },
-  button: {
-    backgroundColor: '#f5f2ec',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonSubmitting: {
-    opacity: 0.8,
-  },
-  buttonText: {
-    color: '#3e3e3e',
-    fontSize: 16,
-    fontWeight: '500',
   },
   successMessageContainer: {
     position: 'absolute',

@@ -1,5 +1,6 @@
+import Colors from '@/constants/Colors';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
 import FadeTransition from './FadeTransition';
 
 interface SoftButtonProps {
@@ -8,31 +9,42 @@ interface SoftButtonProps {
   loadingText?: string;
   disabled?: boolean;
   isLoading?: boolean;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+  icon?: React.ReactNode;
 }
 
 const SoftButton: React.FC<SoftButtonProps> = ({
   onPress,
   text,
-  loadingText = "正在处理...",
+  loadingText = "正在轻声处理...",
   disabled = false,
   isLoading = false,
+  style,
+  textStyle,
+  icon,
 }) => {
   return (
     <TouchableOpacity
       style={[
         styles.button,
         disabled && styles.buttonDisabled,
-        isLoading && styles.buttonLoading
+        isLoading && styles.buttonLoading,
+        style,
       ]}
       onPress={onPress}
       disabled={disabled || isLoading}
+      activeOpacity={0.7} // 轻微的按下反馈
     >
       <FadeTransition visible={!isLoading} duration={300}>
-        <Text style={styles.buttonText}>{text}</Text>
+        <Text style={[styles.buttonText, textStyle]}>
+          {icon && <Text style={styles.iconText}>{icon} </Text>}
+          {text}
+        </Text>
       </FadeTransition>
       
-      <FadeTransition visible={isLoading} duration={300} style={styles.loadingTextContainer}>
-        <Text style={styles.buttonText}>{loadingText}</Text>
+      <FadeTransition visible={isLoading} duration={300} style={styles.loadingContainer}>
+        <Text style={[styles.buttonText, textStyle]}>{loadingText}</Text>
       </FadeTransition>
     </TouchableOpacity>
   );
@@ -40,16 +52,19 @@ const SoftButton: React.FC<SoftButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#f5f2ec',
+    backgroundColor: Colors.light.button,
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.light.textPrimary,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     minHeight: 54,
+    marginBottom: 15,
+    // 添加轻微的浮起动画的准备
+    transform: [{ translateY: 0 }],
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -58,13 +73,18 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   buttonText: {
-    color: '#3e3e3e',
+    color: Colors.light.textPrimary,
     fontSize: 16,
     fontWeight: '500',
   },
-  loadingTextContainer: {
+  loadingContainer: {
     position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
+  iconText: {
+    marginRight: 4,
+  }
 });
 
 export default SoftButton;

@@ -6,6 +6,7 @@ import FadeTransition from '@/components/FadeTransition';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
+import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // 轻微的淡入效果用于标签页切换
@@ -44,7 +45,7 @@ export default function TabLayout() {
     <FadeTransition visible={visible} duration={400} style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: '#3e3e3e', // 更柔和的激活颜色
+          tabBarActiveTintColor: Colors.light.textPrimary,
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
@@ -55,8 +56,8 @@ export default function TabLayout() {
               },
               default: {},
             }),
-            backgroundColor: '#fdfaf6', // 米白色背景
-            borderTopColor: 'rgba(0,0,0,0.03)', // 更柔和的边框
+            backgroundColor: Colors.light.background,
+            borderTopColor: 'rgba(0,0,0,0.03)',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: -2 },
             shadowOpacity: 0.03,
@@ -68,7 +69,7 @@ export default function TabLayout() {
             fontWeight: '400',
             paddingBottom: 4,
           },
-          tabBarInactiveTintColor: '#9e9e9e', // 淡灰色非激活状态
+          tabBarInactiveTintColor: Colors.light.textSecondary,
         }}>
         <Tabs.Screen
           name="WelcomeScreen"
@@ -110,7 +111,7 @@ export default function TabLayout() {
           options={{
             title: '安静参与',
             tabBarIcon: ({ color }) => <IconSymbol size={22} name="hand.raised.fill" color={color} />,
-            // href: null, // 这使它在标签栏不可点击，只能通过ActivityList导航到此页面
+            // href: null,
           }}
         />
       </Tabs>
