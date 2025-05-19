@@ -62,7 +62,8 @@ const ActivityList = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>活动列表</Text>
+      <Text style={styles.introText}>在这里，共处不意味着热闹</Text>
+      <Text style={styles.title}>安静角落</Text>
       
       {activities.length > 0 ? (
         <FlatList
@@ -80,7 +81,7 @@ const ActivityList = () => {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>暂无活动</Text>
+          <Text style={styles.emptyText}>现在很安静，稍后再来看看吧</Text>
         </View>
       )}
     </SafeAreaView>
@@ -90,13 +91,20 @@ const ActivityList = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fdfaf6',
     padding: 20,
   },
+  introText: {
+    fontSize: 16,
+    color: '#6e6e6e',
+    marginBottom: 25,
+    fontStyle: 'italic',
+  },
   title: {
+    fontFamily: 'PlayfairDisplay-Bold',
     fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 20,
+    color: '#3e3e3e',
   },
   listContainer: {
     paddingBottom: 20,
@@ -108,7 +116,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: '#6e6e6e',
   },
 });
 

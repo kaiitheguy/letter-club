@@ -1,28 +1,40 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const WelcomeScreen = () => {
   const [letter, setLetter] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = () => {
+    setIsSubmitting(true);
     // 处理提交逻辑
-    console.log('提交的申请信:', letter);
-    router.replace('/(tabs)');
+    setTimeout(() => {
+      console.log('提交的申请信:', letter);
+      Alert.alert(
+        "邀请函已送出",
+        "你的文字像是落叶，已被风轻轻接住。我们很快会回应。",
+        [
+          { text: "好的", onPress: () => router.replace('/(tabs)') }
+        ]
+      );
+      setIsSubmitting(false);
+    }, 800); // 添加延迟，模拟过渡效果
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>欢迎来到匿名信件沙龙</Text>
+        <Text style={styles.introText}>这是一场无需急于表达的对话</Text>
+        <Text style={styles.title}>轻语之所</Text>
         <Text style={styles.subtitle}>
-          请写下你的第一封申请信，告诉我们你为什么想加入这个平台
+          在这里，你的声音会被温柔地听见
         </Text>
         
         <View style={styles.letterContainer}>
           <TextInput
             style={styles.letterInput}
-            placeholder="写下你的申请信..."
+            placeholder="想对我们说些什么呢？随心而至..."
             value={letter}
             onChangeText={setLetter}
             multiline
@@ -31,11 +43,11 @@ const WelcomeScreen = () => {
         </View>
         
         <TouchableOpacity 
-          style={[styles.button, letter.trim().length < 10 && styles.buttonDisabled]}
+          style={[styles.button, letter.trim().length < 10 && styles.buttonDisabled, isSubmitting && styles.buttonSubmitting]}
           onPress={handleSubmit}
-          disabled={letter.trim().length < 10}
+          disabled={letter.trim().length < 10 || isSubmitting}
         >
-          <Text style={styles.buttonText}>提交申请</Text>
+          <Text style={styles.buttonText}>{isSubmitting ? "正在轻轻送出..." : "✉️ 让文字随风而去"}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -45,21 +57,29 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fdfaf6',
   },
   scrollContainer: {
     padding: 20,
     flexGrow: 1,
   },
+  introText: {
+    fontSize: 16,
+    color: '#6e6e6e',
+    textAlign: 'center',
+    marginBottom: 25,
+    fontStyle: 'italic',
+  },
   title: {
+    fontFamily: 'PlayfairDisplay-Bold',
     fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: '#3e3e3e',
   },
   subtitle: {
     fontSize: 16,
-    color: '#555',
+    color: '#6e6e6e',
     marginBottom: 30,
     textAlign: 'center',
     lineHeight: 22,
@@ -71,7 +91,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -79,20 +99,28 @@ const styles = StyleSheet.create({
     height: 200,
     fontSize: 16,
     lineHeight: 24,
+    color: '#3e3e3e',
   },
   button: {
-    backgroundColor: '#3A86FF',
+    backgroundColor: '#f5f2ec',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   buttonDisabled: {
-    backgroundColor: '#B8C7E5',
+    opacity: 0.6,
+  },
+  buttonSubmitting: {
+    opacity: 0.8,
   },
   buttonText: {
-    color: 'white',
+    color: '#3e3e3e',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });
 

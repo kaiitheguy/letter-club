@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import Activity, { ActivityProps } from '../../components/Activity';
+import { ActivityProps } from '../../components/Activity';
 
 // 根据Activity组件中的实际类型定义重写
 type ActivityData = {
@@ -57,30 +57,33 @@ const ApplyActivity = () => {
   const [name, setName] = useState('');
   const [reason, setReason] = useState('');
   const [contact, setContact] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // 获取活动详情
     const foundActivity = MOCK_ACTIVITIES.find(item => item.id === activityId);
     if (foundActivity) {
-      // Convert foundActivity to match ActivityProps type
       setActivity({
         ...foundActivity,
-        activity: foundActivity, // Add the required 'activity' property
-        // Add any required properties from ActivityProps that might be missing in ActivityData
+        activity: foundActivity,
       } as ActivityProps);
     }
   }, [activityId]);
 
   const handleSubmit = () => {
+    setIsSubmitting(true);
     // 处理申请提交逻辑
-    console.log('提交的申请:', { activityId, name, reason, contact });
-    Alert.alert(
-      "申请已提交",
-      "你的活动申请已成功提交，我们会尽快处理！",
-      [
-        { text: "确定", onPress: () => router.back() }
-      ]
-    );
+    setTimeout(() => {
+      console.log('提交的申请:', { activityId, name, reason, contact });
+      Alert.alert(
+        "邀请已送达",
+        "你的心意已被悄悄收藏，我们会用心回应。",
+        [
+          { text: "好的", onPress: () => router.back() }
+        ]
+      );
+      setIsSubmitting(false);
+    }, 800);
   };
 
   const isFormValid = name.trim() && reason.trim() && contact.trim();
@@ -88,7 +91,7 @@ const ApplyActivity = () => {
   if (!activity) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.loading}>暂无活动</Text>
+        <Text style={styles.loading}>正在静静等待...</Text>
       </SafeAreaView>
     );
   }
@@ -96,27 +99,31 @@ const ApplyActivity = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>活动申请</Text>
+        <Text style={styles.introText}>参与，也可以是一种安静的存在</Text>
+        <Text style={styles.title}>安静参与</Text>
         
-        <Activity 
-          activity={activity.activity}
-          showApplyButton={false}
-          showStatus={false}
-        />
+        {activity && (
+          <View style={styles.activityInfoContainer}>
+            <Text style={styles.activityTitle}>{activity.activity.title}</Text>
+            <Text style={styles.activityDetails}>时间：{activity.activity.date}</Text>
+            <Text style={styles.activityDetails}>地点：{activity.activity.location}</Text>
+            <Text style={styles.activityDescription}>{activity.activity.description}</Text>
+          </View>
+        )}
         
         <View style={styles.formContainer}>
           <Text style={styles.label}>你的名字</Text>
           <TextInput
             style={styles.input}
-            placeholder="请输入你的名字"
+            placeholder="仅活动组织者可见..."
             value={name}
             onChangeText={setName}
           />
           
-          <Text style={styles.label}>申请理由</Text>
+          <Text style={styles.label}>你想参与的原因</Text>
           <TextInput
             style={styles.reasonInput}
-            placeholder="请简述你参加活动的原因和期望..."
+            placeholder="你来，是因为？"
             value={reason}
             onChangeText={setReason}
             multiline
@@ -126,18 +133,24 @@ const ApplyActivity = () => {
           <Text style={styles.label}>联系方式</Text>
           <TextInput
             style={styles.input}
-            placeholder="请输入手机号码或邮箱"
+            placeholder="一个能找到你的方式..."
             value={contact}
             onChangeText={setContact}
           />
         </View>
         
         <TouchableOpacity 
-          style={[styles.button, !isFormValid && styles.buttonDisabled]}
+          style={[
+            styles.button, 
+            !isFormValid && styles.buttonDisabled,
+            isSubmitting && styles.buttonSubmitting
+          ]}
           onPress={handleSubmit}
-          disabled={!isFormValid}
+          disabled={!isFormValid || isSubmitting}
         >
-          <Text style={styles.buttonText}>提交申请</Text>
+          <Text style={styles.buttonText}>
+            {isSubmitting ? "正在轻声传递..." : "🍃 让心意悄悄传递"}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -147,7 +160,7 @@ const ApplyActivity = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fdfaf6',
   },
   scrollContainer: {
     padding: 20,
@@ -157,12 +170,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 50,
     fontSize: 16,
-    color: '#666',
+    color: '#6e6e6e',
+    fontStyle: 'italic',
+  },
+  introText: {
+    fontSize: 16,
+    color: '#6e6e6e',
+    marginBottom: 25,
+    fontStyle: 'italic',
   },
   title: {
+    fontFamily: 'PlayfairDisplay-Bold',
     fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 20,
+    color: '#3e3e3e',
   },
   formContainer: {
     backgroundColor: 'white',
@@ -171,7 +192,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -179,39 +200,74 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#333',
+    color: '#3e3e3e',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: '#e8e8e8',
     borderRadius: 6,
     padding: 12,
     fontSize: 16,
     marginBottom: 20,
+    color: '#3e3e3e',
   },
   reasonInput: {
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: '#e8e8e8',
     borderRadius: 6,
     padding: 12,
     fontSize: 16,
     height: 150,
     marginBottom: 20,
+    color: '#3e3e3e',
   },
   button: {
-    backgroundColor: '#3A86FF',
+    backgroundColor: '#f5f2ec',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   buttonDisabled: {
-    backgroundColor: '#B8C7E5',
+    opacity: 0.6,
+  },
+  buttonSubmitting: {
+    opacity: 0.8,
   },
   buttonText: {
-    color: 'white',
+    color: '#3e3e3e',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  activityInfoContainer: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activityTitle: {
+    fontFamily: 'PlayfairDisplay-Bold',
+    fontSize: 24,
+    marginBottom: 20,
+    color: '#3e3e3e',
+  },
+  activityDetails: {
+    fontSize: 16,
+    color: '#6e6e6e',
+    marginBottom: 8,
+  },
+  activityDescription: {
+    fontSize: 16,
+    color: '#6e6e6e',
   },
 });
 
