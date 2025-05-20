@@ -1,6 +1,28 @@
 import { supabase } from '../utils/supabase';
 import { Activity, UserProfile as ImportedUserProfile, Letter, User } from './types';
 
+// Store the original fetch function
+const originalFetch = global.fetch;
+
+// If you've overridden global.fetch, make sure it passes through all headers:
+global.fetch = async (url, options = {}) => {
+  const urlString = typeof url === 'string' 
+    ? url 
+    : url instanceof URL 
+      ? url.toString() 
+      : url instanceof Request 
+        ? url.url 
+        : '';
+        
+  if (urlString.includes('supabase')) {
+    console.log('[DEBUG] Request URL:', urlString);
+    console.log('[DEBUG] Request headers:', JSON.stringify(options?.headers));
+  }
+  
+  // Make sure to call the original fetch with ALL original options
+  return originalFetch(url, options);
+};
+
 // 发送 magic link 登录请求
 export async function loginWithMagicLink(email: string): Promise<boolean> {
   try {
@@ -22,14 +44,13 @@ export async function loginWithMagicLink(email: string): Promise<boolean> {
 // 获取当前用户信息
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    // 获取当前认证会话
     const { data: { session }, error: authError } = await supabase.auth.getSession();
     
     if (authError || !session) {
       throw authError || new Error('No active session');
     }
-
-    // 查询用户信息
+    
+    // Explicitly ensure we have proper headers by using the same client instance
     const { data, error } = await supabase
       .from('users')
       .select('*')
