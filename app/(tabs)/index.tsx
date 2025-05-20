@@ -15,7 +15,7 @@ export default function HomeScreen() {
         if (user) {
           // 从数据库获取用户笔名，这里假设你有一个 profiles 表
           const { data, error } = await supabase
-            .from('profiles')
+            .from('users')
             .select('pen_name')
             .eq('id', user.id)
             .single();

@@ -117,6 +117,13 @@ export default function TabLayout() {
             // href: null,
           }}
         />
+        <Tabs.Screen
+          name="User"
+          options={{
+            title: '个人信笺',
+            tabBarIcon: ({ color }) => <IconSymbol size={22} name="person.crop.circle" color={color} />,
+          }}
+        />
       </Tabs>
     </FadeTransition>
   );

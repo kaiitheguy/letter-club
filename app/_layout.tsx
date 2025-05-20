@@ -1,7 +1,3 @@
-console.log('=====================================================');
-console.log('LAYOUT FILE LOADED - THIS SHOULD ALWAYS BE VISIBLE');
-console.log('=====================================================');
-
 import Constants from 'expo-constants';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -30,44 +26,34 @@ export default function RootLayout() {
   // 当前路由是否已经是登录页面
   const isOnLoginScreen = segments[0] === 'Login';
   
-  console.log('[RootLayout] Initial render, isLoggedIn:', isLoggedIn, 'redirecting:', redirecting, 'isOnLoginScreen:', isOnLoginScreen);
-
   // 初始化 - 只运行一次
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
     
-    console.log('[RootLayout] Initializing auth check');
-    
     // 检查会话状态
     const checkSession = async () => {
-      console.log('[checkSession] Starting session check');
       try {
         const { data, error } = await supabase.auth.getSession();
-        console.log('[checkSession] Session data available:', !!data, 'Error:', !!error);
         
         if (error) {
-          console.error('[checkSession] Error:', error.message);
+          console.error('Session check error:', error.message);
           setIsLoggedIn(false);
           return;
         }
         
         const loggedIn = !!data?.session;
-        console.log('[checkSession] User logged in:', loggedIn);
         setIsLoggedIn(loggedIn);
         
       } catch (error) {
-        console.error('[checkSession] Exception:', error);
+        console.error('Session check exception:', error);
         setIsLoggedIn(false);
       }
     };
     
     // 设置认证状态变化监听
     const setupAuthListener = () => {
-      console.log('[setupAuthListener] Setting up auth listener');
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log('[authStateChange] Event:', event, 'Session exists:', !!session);
-        
         if (event === 'SIGNED_IN') {
           setIsLoggedIn(true);
         } else if (event === 'SIGNED_OUT') {
@@ -81,7 +67,7 @@ export default function RootLayout() {
     // 设置超时处理
     const timeoutId = setTimeout(() => {
       if (isLoggedIn === null) {
-        console.warn('[RootLayout] Auth check timed out after 8 seconds');
+        console.warn('Auth check timed out after 8 seconds');
         setIsLoggedIn(false);
       }
     }, 8000);
@@ -93,28 +79,23 @@ export default function RootLayout() {
       clearTimeout(timeoutId);
       // 清理监听器
       if (authListener.current) {
-        console.log('[RootLayout] Cleaning up auth listener');
         authListener.current?.subscription?.unsubscribe?.();
       }
     };
   }, []);
-
+  
   // 处理路由逻辑 - 当登录状态变化或已经在登录页面时触发
   useEffect(() => {
-    console.log('[RouteEffect] isLoggedIn:', isLoggedIn, 'redirecting:', redirecting, 'isOnLoginScreen:', isOnLoginScreen);
-    
     // 如果状态未确定，不做任何操作
     if (isLoggedIn === null) return;
     
     // 未登录且不在登录页面 - 跳转到登录
     if (!isLoggedIn && !isOnLoginScreen && !redirecting) {
-      console.log('[RouteEffect] Redirecting to login page');
       setRedirecting(true);
       
       // 防止重复导航
       setTimeout(() => {
         router.replace('/Login');
-        console.log('[RouteEffect] Navigation triggered');
         // 重置redirecting状态以允许将来的重定向
         setTimeout(() => setRedirecting(false), 1000);
       }, 0);
@@ -122,12 +103,10 @@ export default function RootLayout() {
     
     // 已登录但在登录页面 - 跳转到主页
     if (isLoggedIn && isOnLoginScreen && !redirecting) {
-      console.log('[RouteEffect] Redirecting to main app');
       setRedirecting(true);
       
       setTimeout(() => {
         router.replace('/(tabs)');
-        console.log('[RouteEffect] Navigation triggered');
         // 重置redirecting状态以允许将来的重定向
         setTimeout(() => setRedirecting(false), 1000);
       }, 0);
@@ -136,7 +115,6 @@ export default function RootLayout() {
 
   // 加载状态
   if (isLoggedIn === null) {
-    console.log('[RootLayout] Showing loading screen');
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6c757d" />
@@ -145,8 +123,6 @@ export default function RootLayout() {
   }
 
   // 渲染适当的内容
-  console.log('[RootLayout] Rendering, isLoggedIn:', isLoggedIn);
-  
   return (
     <>
       <StatusBar style="dark" />

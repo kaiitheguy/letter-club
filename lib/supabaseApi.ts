@@ -1,5 +1,5 @@
 import { supabase } from '../utils/supabase';
-import { Activity, Letter, User, UserProfile } from './types';
+import { Activity, UserProfile as ImportedUserProfile, Letter, User } from './types';
 
 // 发送 magic link 登录请求
 export async function loginWithMagicLink(email: string): Promise<boolean> {
@@ -228,31 +228,99 @@ export async function logoutUser(): Promise<boolean> {
 }
 
 /**
- * 获取用户的完整资料
+ * 获取用户笔名
+ * @param userId 用户ID
+ * @returns 用户笔名或空字符串（如果没有设置）
  */
-export const getUserProfile = async (): Promise<UserProfile | null> => {
+export async function getUserPenName(userId: string): Promise<string | null> {
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      throw userError || new Error('未找到用户');
+    if (!userId) {
+      return null;
     }
-    
+
+    // 简化查询，只获取必要字段
     const { data, error } = await supabase
       .from('users')
-      .select('*')
-      .eq('id', userData.user.id)
-      .single();
+      .select('id, email, pen_name')
+      .eq('id', userId);
     
     if (error) {
-      throw error;
+      console.error('获取用户信息失败:', error);
+      return null;
     }
     
-    return data as UserProfile;
+    // 即使没有笔名也返回用户
+    if (data && data.length > 0) {
+      // 返回笔名或null（如果不存在）
+      return data[0].pen_name;
+    }
+    
+    return null;
   } catch (error) {
-    console.error('获取用户资料错误:', error);
+    console.error('获取用户信息错误:', error);
     return null;
   }
-};
+}
+
+/**
+ * 获取当前用户的个人资料
+ * @returns 用户个人资料或null
+ */
+export async function getUserProfile(): Promise<ImportedUserProfile | null> {
+  try {
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    
+    if (authError || !session) {
+      return null;
+    }
+
+    const userId = session.user.id;
+    const userEmail = session.user.email;
+    
+    // 先通过ID查询
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, approved, created_at, pen_name, application_letter')
+      .eq('id', userId);
+    
+    // 检查ID查询结果
+    if (!error && data && data.length > 0) {
+      return data[0] as ImportedUserProfile;
+    }
+    
+    // 如果ID查询失败，尝试通过邮箱查询
+    if (userEmail) {
+      const { data: emailData, error: emailError } = await supabase
+        .from('users')
+        .select('id, email, approved, created_at, pen_name, application_letter')
+        .eq('email', userEmail);
+      
+      if (!emailError && emailData && emailData.length > 0) {
+        return emailData[0] as ImportedUserProfile;
+      }
+    }
+    
+    // 如果没有找到记录，创建一个新用户记录（只包含必需字段）
+    const { data: newUser, error: insertError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email: userEmail,
+        approved: false
+      })
+      .select();
+    
+    if (insertError) {
+      console.error('创建用户记录失败:', insertError);
+      return null;
+    }
+    
+    return newUser && newUser.length > 0 ? newUser[0] as ImportedUserProfile : null;
+  } catch (error) {
+    console.error('获取用户信息错误:', error);
+    return null;
+  }
+}
 
 /**
  * 发送 Magic Link 邮件登录
@@ -297,3 +365,112 @@ export const signOut = async () => {
     throw error;
   }
 };
+
+/**
+ * 注册新用户并在 users 表中创建对应的用户记录
+ * 
+ * @param email 用户邮箱
+ * @param password 用户密码
+ * @returns 成功返回 true，失败返回 false
+ */
+export async function registerAndInsertUser(email: string, password: string): Promise<boolean> {
+  try {
+    console.log(`[Supabase] Registering new user: ${email}`);
+    
+    // 步骤1: 使用 Supabase Auth 注册新用户
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (signUpError || !signUpData.user) {
+      console.error('[Supabase] Registration failed:', signUpError?.message);
+      return false;
+    }
+
+    console.log(`[Supabase] User registered successfully. User ID: ${signUpData.user.id}`);
+
+    // 等待会话准备好（通过事件监听）
+    return await new Promise((resolve) => {
+      const { data: listener } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log(`[Supabase] Auth state changed: ${event}`);
+          
+          if (event === 'SIGNED_IN' && session?.user?.id) {
+            console.log('[Supabase] Session ready, inserting user row...');
+
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert({
+                id: session.user.id,
+                email: session.user.email,
+                approved: false,
+              });
+
+            // 清理监听器
+            listener?.subscription?.unsubscribe();
+
+            if (insertError) {
+              console.error('[Supabase] Insert error:', insertError.message);
+              console.error('[Supabase] Error details:', {
+                code: insertError.code,
+                details: insertError.details,
+                hint: insertError.hint
+              });
+              resolve(false);
+            } else {
+              console.log('[Supabase] User inserted successfully');
+              resolve(true);
+            }
+          }
+        }
+      );
+
+      // 如果 10 秒后还没触发，直接 fail
+      setTimeout(() => {
+        listener?.subscription?.unsubscribe();
+        console.warn('[Supabase] Timeout waiting for session');
+        resolve(false);
+      }, 10000);
+    });
+  } catch (error) {
+    console.error('[Supabase] Unexpected error during registration:', error);
+    return false;
+  }
+}
+
+/**
+ * 检查用户是否已获得批准
+ * 
+ * @param userId 用户ID
+ * @returns 用户获批状态，出错则返回null
+ */
+export async function checkUserApprovalStatus(userId: string): Promise<boolean | null> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('approved')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('[Supabase] Failed to check approval status:', error.message);
+      return null;
+    }
+    
+    return data?.approved || false;
+  } catch (error) {
+    console.error('[Supabase] Error checking approval status:', error);
+    return null;
+  }
+}
+
+// 更新 UserProfile 类型定义，使笔名和申请信字段可选
+export interface UserProfile {
+  id: string;
+  email: string;
+  approved: boolean;
+  created_at: string;
+  pen_name?: string | null;
+  application_letter?: string | null;
+}

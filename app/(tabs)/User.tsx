@@ -1,14 +1,45 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { getCurrentUser, getUserProfile } from '../../lib/supabaseApi';
 import { UserProfile } from '../../lib/types';
 import { supabase } from '../../utils/supabase';
+
+// 创建动画组件
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function User() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   
+  // 为按钮添加动画效果
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  
+  // 按钮动画效果
+  const handlePressIn = () => {
+    Animated.spring(buttonScale, {
+      toValue: 0.97,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const handlePressOut = () => {
+    Animated.spring(buttonScale, {
+      toValue: 1,
+      friction: 5,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
   useEffect(() => {
     loadUserData();
   }, []);
@@ -59,12 +90,12 @@ export default function User() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#6a7b8c" />
+        <ActivityIndicator size="large" color="#6c7a89" />
         <Text style={styles.loadingText}>正在打开信封...</Text>
       </View>
     );
   }
-
+ 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -85,19 +116,29 @@ export default function User() {
         )}
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.testButton} 
+          <AnimatedTouchable 
+            style={[
+              styles.testButton,
+              { transform: [{ scale: buttonScale }] }
+            ]} 
             onPress={handleTestButton}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
           >
             <Text style={styles.buttonText}>测试用户信息</Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
           
-          <TouchableOpacity 
-            style={styles.signOutButton} 
+          <AnimatedTouchable 
+            style={[
+              styles.signOutButton,
+              { transform: [{ scale: buttonScale }] }
+            ]} 
             onPress={handleSignOut}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
           >
             <Text style={styles.buttonText}>退出登录</Text>
-          </TouchableOpacity>
+          </AnimatedTouchable>
         </View>
       </View>
     </View>
@@ -107,88 +148,110 @@ export default function User() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f8f4e9',  // 米白色背景
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   centered: {
     flex: 1,
+    backgroundColor: '#f8f4e9',  // 保持加载页面的背景色一致
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: '#7d8b98',  // 温和的灰蓝色
+    fontFamily: Platform.OS === 'ios' ? 'Baskerville' : 'serif',
   },
   card: {
     width: '100%',
     maxWidth: 400,
-    padding: 25,
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 2,
+    padding: 30,
+    backgroundColor: '#fffcf7',  // 更温暖的米白色
+    borderRadius: 18,
+    shadowColor: '#8a7e66',  // 更温暖的阴影色
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
     alignItems: 'center',
+    borderWidth: 0.5,
+    borderColor: 'rgba(210, 200, 180, 0.2)',  // 纸质边框感
   },
   pendingContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 35,
+    paddingHorizontal: 10,
   },
   pendingTitle: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: '#6a7b8c',
-    marginBottom: 15,
+    fontSize: 22,
+    color: '#6b8096',  // 灰蓝色
+    marginBottom: 18,
+    fontFamily: Platform.OS === 'ios' ? 'Baskerville' : 'serif',
+    letterSpacing: 0.5,
   },
   welcomeContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 35,
   },
   welcomeTitle: {
-    fontSize: 22,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 10,
+    fontSize: 24,
+    color: '#6b7a89',  // 灰蓝色
+    marginBottom: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Baskerville' : 'serif',
+    letterSpacing: 0.5,
   },
   penName: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#6a7b8c',
+    fontSize: 28,
+    color: '#797056',  // 温暖棕色
+    fontFamily: Platform.OS === 'ios' ? 'Baskerville' : 'serif',
+    letterSpacing: 0.7,
   },
   message: {
-    fontSize: 16,
-    color: '#555',
+    fontSize: 17,
+    color: '#6c7a89',  // 灰蓝色
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 26,
+    fontFamily: Platform.OS === 'ios' ? 'Avenir-Light' : 'sans-serif-light',
+    letterSpacing: 0.3,
   },
   buttonContainer: {
     width: '100%',
-    marginTop: 20,
-    gap: 10,
+    marginTop: 25,
+    gap: 14,
   },
   testButton: {
     width: '100%',
-    height: 45,
-    backgroundColor: '#8ea0b2',
-    borderRadius: 8,
+    height: 48,  // 确保点击区域足够大
+    backgroundColor: '#a4b0be',  // 柔和的灰蓝色
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#8a7e66',  
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   signOutButton: {
     width: '100%',
-    height: 45,
-    backgroundColor: '#6a7b8c',
-    borderRadius: 8,
+    height: 48,  // 确保点击区域足够大
+    backgroundColor: '#8aa99b',  // 温和的灰绿色
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#8a7e66',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   buttonText: {
-    color: '#fff',
+    color: '#fffcf7',  // 米白色文字
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'Avenir' : 'sans-serif',
+    letterSpacing: 0.5,
   },
 });

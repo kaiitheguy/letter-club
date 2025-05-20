@@ -30,8 +30,8 @@ export interface Activity {
 export interface UserProfile {
   id: string;
   email: string;
+  pen_name: string | null;
+  application_letter: string | null;
   approved: boolean;
-  pen_name: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
 }
