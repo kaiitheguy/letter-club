@@ -1,59 +1,29 @@
+import Activity from '@/components/Activity';
+import TextStyles from '@/constants/TextStyles';
+import { getActivities } from '@/lib/supabaseApi';
+import { Activity as ActivityType } from '@/lib/types';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import Activity from '../../components/Activity';
-
-// 根据Activity组件中的实际类型定义重写
-type ActivityData = {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  description: string;
-  isRegistrationOpen?: boolean;
-  capacity?: number;
-  registered?: number;
-};
-
-// 假数据
-const MOCK_ACTIVITIES: ActivityData[] = [
-  {
-    id: '1',
-    title: '城市夜景摄影沙龙',
-    date: '2023-12-10 19:00',
-    location: '艺术中心',
-    description: '一起探讨城市夜景摄影技巧，分享作品，结交志同道合的朋友。',
-    isRegistrationOpen: true,
-    capacity: 20,
-    registered: 12,
-  },
-  {
-    id: '2',
-    title: '文学交流会',
-    date: '2023-12-15 14:00',
-    location: '中央图书馆',
-    description: '讨论最近阅读的书籍，交流心得，推荐好书。',
-    isRegistrationOpen: true,
-    capacity: 15,
-    registered: 15, // 已满
-  },
-  {
-    id: '3',
-    title: '咖啡品鉴工作坊',
-    date: '2023-12-20 10:00',
-    location: 'Blue Coffee',
-    description: '专业咖啡师带你了解不同产地的咖啡豆，学习品鉴方法。',
-    isRegistrationOpen: false, // 已结束
-    capacity: 10,
-    registered: 8,
-  },
-];
 
 const ActivityList = () => {
-  const [activities] = React.useState(MOCK_ACTIVITIES);
+  const [activities, setActivities] = useState<ActivityType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleApply = (activity: ActivityData) => {
-    // 导航到申请页面，并传递活动ID
+  const fetchActivities = async () => {
+    setIsRefreshing(true);
+    const data = await getActivities();
+    setActivities(data);
+    setIsLoading(false);
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const handleApply = (activity: ActivityType) => {
     router.push({
       pathname: '/(tabs)/ApplyActivity',
       params: { activityId: activity.id }
@@ -62,8 +32,8 @@ const ActivityList = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.introText}>在这里，共处不意味着热闹</Text>
-      <Text style={styles.title}>安静角落</Text>
+      <Text style={TextStyles.introText}>在这里，共处不意味着热闹</Text>
+      <Text style={TextStyles.title}>安静角落</Text>
       
       {activities.length > 0 ? (
         <FlatList
@@ -71,17 +41,20 @@ const ActivityList = () => {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <Activity 
-              activity={item} 
-              onApply={handleApply} 
+              activity={{...item, location: ''}} 
+              onApply={() => handleApply(item)}
               showApplyButton={true}
-              showStatus={true}
             />
           )}
+          refreshing={isRefreshing}
+          onRefresh={fetchActivities}
           contentContainerStyle={styles.listContainer}
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>现在很安静，稍后再来看看吧</Text>
+          <Text style={styles.emptyText}>
+            {isLoading ? "正在安静寻找角落..." : "现在很安静，稍后再来看看吧"}
+          </Text>
         </View>
       )}
     </SafeAreaView>

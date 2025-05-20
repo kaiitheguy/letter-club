@@ -1,10 +1,11 @@
+import FadeTransition from '@/components/FadeTransition';
 import SoftButton from '@/components/SoftButton';
 import Colors from '@/constants/Colors';
 import TextStyles from '@/constants/TextStyles';
+import { sendLetter } from '@/lib/supabaseApi';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import FadeTransition from '../../components/FadeTransition';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 const SendLetter = () => {
   const [title, setTitle] = useState('');
@@ -12,10 +13,18 @@ const SendLetter = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!title.trim() || !content.trim()) return;
+    
     setIsSubmitting(true);
-    setTimeout(() => {
-      console.log('提交的信件:', { title, content });
+    
+    // 将标题和内容合并成一个完整的信件正文
+    const fullContent = `${title}\n\n${content}`;
+    const success = await sendLetter(fullContent);
+    
+    setIsSubmitting(false);
+    
+    if (success) {
       setShowSuccessMessage(true);
       
       setTimeout(() => {
@@ -24,9 +33,9 @@ const SendLetter = () => {
           router.back();
         }, 300);
       }, 2000);
-      
-      setIsSubmitting(false);
-    }, 800);
+    } else {
+      Alert.alert("发送失败", "请稍后再试");
+    }
   };
 
   const isFormValid = title.trim().length > 0 && content.trim().length > 0;

@@ -1,100 +1,64 @@
+import SoftButton from '@/components/SoftButton';
+import { applyToActivity, getActivities } from '@/lib/supabaseApi';
+import { Activity } from '@/lib/types';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { ActivityProps } from '../../components/Activity';
-
-// 根据Activity组件中的实际类型定义重写
-type ActivityData = {
-  id: string;
-  title: string;
-  date: string;
-  location: string;
-  description: string;
-  isRegistrationOpen?: boolean;
-  capacity?: number;
-  registered?: number;
-};
-
-// 假数据
-const MOCK_ACTIVITIES: ActivityData[] = [
-  {
-    id: '1',
-    title: '城市夜景摄影沙龙',
-    date: '2023-12-10 19:00',
-    location: '艺术中心',
-    description: '一起探讨城市夜景摄影技巧，分享作品，结交志同道合的朋友。',
-    isRegistrationOpen: true,
-    capacity: 20,
-    registered: 12,
-  },
-  {
-    id: '2',
-    title: '文学交流会',
-    date: '2023-12-15 14:00',
-    location: '中央图书馆',
-    description: '讨论最近阅读的书籍，交流心得，推荐好书。',
-    isRegistrationOpen: true,
-    capacity: 15,
-    registered: 15, // 已满
-  },
-  {
-    id: '3',
-    title: '咖啡品鉴工作坊',
-    date: '2023-12-20 10:00',
-    location: 'Blue Coffee',
-    description: '专业咖啡师带你了解不同产地的咖啡豆，学习品鉴方法。',
-    isRegistrationOpen: false, // 已结束
-    capacity: 10,
-    registered: 8,
-  },
-];
+import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 const ApplyActivity = () => {
   const params = useLocalSearchParams();
   const { activityId } = params;
   
-  const [activity, setActivity] = useState<ActivityProps | null>(null);
+  const [activity, setActivity] = useState<Activity | null>(null);
   const [name, setName] = useState('');
   const [reason, setReason] = useState('');
   const [contact, setContact] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // 获取活动详情
-    const foundActivity = MOCK_ACTIVITIES.find(item => item.id === activityId);
-    if (foundActivity) {
-      setActivity({
-        ...foundActivity,
-        activity: foundActivity,
-      } as ActivityProps);
+    async function fetchActivity() {
+      if (!activityId) {
+        router.back();
+        return;
+      }
+      
+      // 获取所有活动，然后找到指定ID的活动
+      const activities = await getActivities();
+      const foundActivity = activities.find(a => a.id === activityId);
+      
+      if (foundActivity) {
+        setActivity(foundActivity);
+      } else {
+        Alert.alert("未找到活动", "请返回活动列表重试");
+        router.back();
+      }
     }
+    
+    fetchActivity();
   }, [activityId]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!activityId || !isFormValid) return;
+    
     setIsSubmitting(true);
-    // 处理申请提交逻辑
-    setTimeout(() => {
-      console.log('提交的申请:', { activityId, name, reason, contact });
+    
+    // 实际应用中，可以额外保存申请原因和联系方式到其他表
+    const success = await applyToActivity(activityId as string);
+    
+    setIsSubmitting(false);
+    
+    if (success) {
       Alert.alert(
-        "邀请已送达",
-        "你的心意已被悄悄收藏，我们会用心回应。",
-        [
-          { text: "好的", onPress: () => router.back() }
-        ]
+        "申请已提交",
+        "你的参与请求已悄悄送出，静待回音",
+        [{ text: "好的", onPress: () => router.back() }]
       );
-      setIsSubmitting(false);
-    }, 800);
+    } else {
+      Alert.alert("申请失败", "请稍后再试");
+    }
   };
 
   const isFormValid = name.trim() && reason.trim() && contact.trim();
-
-  if (!activity) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.loading}>正在静静等待...</Text>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -104,10 +68,10 @@ const ApplyActivity = () => {
         
         {activity && (
           <View style={styles.activityInfoContainer}>
-            <Text style={styles.activityTitle}>{activity.activity.title}</Text>
-            <Text style={styles.activityDetails}>时间：{activity.activity.date}</Text>
-            <Text style={styles.activityDetails}>地点：{activity.activity.location}</Text>
-            <Text style={styles.activityDescription}>{activity.activity.description}</Text>
+            <Text style={styles.activityTitle}>{activity.title}</Text>
+            <Text style={styles.activityDetails}>时间：{activity.date}</Text>
+            {/* <Text style={styles.activityDetails}>地点：{activity.location}</Text> */}
+            <Text style={styles.activityDescription}>{activity.description}</Text>
           </View>
         )}
         
@@ -139,19 +103,13 @@ const ApplyActivity = () => {
           />
         </View>
         
-        <TouchableOpacity 
-          style={[
-            styles.button, 
-            !isFormValid && styles.buttonDisabled,
-            isSubmitting && styles.buttonSubmitting
-          ]}
+        <SoftButton 
+          text="🍃 让心意悄悄传递" 
+          loadingText="正在轻声传递..." 
           onPress={handleSubmit}
-          disabled={!isFormValid || isSubmitting}
-        >
-          <Text style={styles.buttonText}>
-            {isSubmitting ? "正在轻声传递..." : "🍃 让心意悄悄传递"}
-          </Text>
-        </TouchableOpacity>
+          disabled={!isFormValid}
+          isLoading={isSubmitting}
+        />
       </ScrollView>
     </SafeAreaView>
   );

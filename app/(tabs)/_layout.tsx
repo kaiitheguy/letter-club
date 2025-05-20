@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -30,7 +31,7 @@ const FadeTabView = ({ children, isFocused }: { children: React.ReactNode; isFoc
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   
   // 页面加载时的淡入效果
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function TabLayout() {
     <FadeTransition visible={visible} duration={400} style={{ flex: 1 }}>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: Colors.light.textPrimary,
+          tabBarActiveTintColor: '#6c7a89',
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarBackground: TabBarBackground,
@@ -81,8 +82,10 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: '悄悄心事',
-            tabBarIcon: ({ color }) => <IconSymbol size={22} name="sparkles" color={color} />,
+            title: '首页',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" size={size} color={color} />
+            ),
           }}
         />
         <Tabs.Screen

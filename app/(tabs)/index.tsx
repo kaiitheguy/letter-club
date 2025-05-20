@@ -1,91 +1,154 @@
-import { router } from 'expo-router';
-import React from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { supabase } from '../../utils/supabase'; // 确保你有这个导入
 
-const HomeScreen = () => {
-  const navigateTo = (route: string) => {
-    router.push(route as any);
-  };
+export default function HomeScreen() {
+  const router = useRouter();
+  const [penName, setPenName] = useState('');
+  
+  useEffect(() => {
+    async function fetchUserProfile() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // 从数据库获取用户笔名，这里假设你有一个 profiles 表
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('pen_name')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) throw error;
+          if (data?.pen_name) {
+            setPenName(data.pen_name);
+          }
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error);
+      }
+    }
+    
+    fetchUserProfile();
+  }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.introText}>你不需要立刻说话。慢慢来。</Text>
-      <Text style={styles.title}>匿名信件沙龙</Text>
-      <Text style={styles.subtitle}>这里是安静的角落，不必急于表达</Text>
-      
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => navigateTo('/SendLetter')}
-        >
-          <Text style={styles.buttonText}>✍️ 想说点什么？</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => navigateTo('/Inbox')}
-        >
-          <Text style={styles.buttonText}>📬 看看有没有来信</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => navigateTo('/ActivityList')}
-        >
-          <Text style={styles.buttonText}>🎴 我想安静地加入</Text>
-        </TouchableOpacity>
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.welcomeSection}>
+          <Text style={styles.greeting}>您好!</Text>
+          <Text style={styles.penName}>{penName || '亲爱的用户'}</Text>
+          <Text style={styles.welcomeText}>
+            今天想要分享些什么呢？
+          </Text>
+        </View>
+
+        <View style={styles.actionCards}>
+          <TouchableOpacity 
+            style={styles.card}
+            onPress={() => router.push('/(tabs)/SendLetter')}
+          >
+            <View style={styles.cardContent}>
+              <Ionicons name="create-outline" size={30} color="#6c7a89" />
+              <Text style={styles.cardTitle}>我要写信</Text>
+              <Text style={styles.cardDescription}>
+                记录下您的思绪，传递心意
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.card}
+            onPress={() => router.push('/(tabs)/Inbox')}
+          >
+            <View style={styles.cardContent}>
+              <Ionicons name="mail-outline" size={30} color="#6c7a89" />
+              <Text style={styles.cardTitle}>查看来信</Text>
+              <Text style={styles.cardDescription}>
+                收到了{/* 这里可以放未读数量 */}封新信件
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.card}
+            onPress={() => router.push('/(tabs)/ActivityList')}
+          >
+            <View style={styles.cardContent}>
+              <Ionicons name="calendar-outline" size={30} color="#6c7a89" />
+              <Text style={styles.cardTitle}>参与活动</Text>
+              <Text style={styles.cardDescription}>
+                探索更多有趣的互动
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
       </View>
-    </SafeAreaView>
+    </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fdfaf6', // 米白色背景
+    backgroundColor: '#f8f4e9', // 米白色背景
+  },
+  content: {
+    flex: 1,
     padding: 20,
-    justifyContent: 'center',
-  },
-  introText: {
-    fontSize: 16,
-    color: '#6e6e6e',
-    textAlign: 'center',
-    marginBottom: 40,
-    fontStyle: 'italic',
-  },
-  title: {
-    fontFamily: 'PlayfairDisplay-Bold',
-    fontSize: 28,
-    textAlign: 'center',
-    marginBottom: 10,
-    color: '#3e3e3e',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6e6e6e',
-    textAlign: 'center',
-    marginBottom: 60,
-  },
-  buttonContainer: {
-    width: '100%',
-  },
-  button: {
-    backgroundColor: '#f5f2ec', // 浅米色按钮
-    paddingVertical: 18,
-    borderRadius: 8,
-    marginBottom: 20,
     alignItems: 'center',
+  },
+  welcomeSection: {
+    alignItems: 'center',
+    marginVertical: 30,
+  },
+  greeting: {
+    fontSize: 22,
+    color: '#555',
+    marginBottom: 8,
+  },
+  penName: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  actionCards: {
+    width: '100%',
+    marginTop: 10,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 2,
   },
-  buttonText: {
-    color: '#3e3e3e',
-    fontSize: 17,
-    fontWeight: '500',
+  cardContent: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#777',
+    textAlign: 'center',
   },
 });
-
-export default HomeScreen;

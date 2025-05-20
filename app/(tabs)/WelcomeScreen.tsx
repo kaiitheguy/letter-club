@@ -1,25 +1,43 @@
+import { checkApprovalStatus, submitApplication } from '@/lib/supabaseApi';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const WelcomeScreen = () => {
   const [letter, setLetter] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  // 检查用户是否已经被批准
+  useEffect(() => {
+    async function checkApproval() {
+      const isApproved = await checkApprovalStatus();
+      if (isApproved) {
+        // 如果用户已被批准，直接跳转到主页
+        router.replace('/(tabs)');
+      }
+    }
+    
+    checkApproval();
+  }, []);
+
+  const handleSubmit = async () => {
+    if (letter.trim().length < 10) return;
+    
     setIsSubmitting(true);
-    // 处理提交逻辑
-    setTimeout(() => {
-      console.log('提交的申请信:', letter);
+    
+    const success = await submitApplication(letter);
+    
+    setIsSubmitting(false);
+    
+    if (success) {
       Alert.alert(
         "邀请函已送出",
         "你的文字像是落叶，已被风轻轻接住。我们很快会回应。",
-        [
-          { text: "好的", onPress: () => router.replace('/(tabs)') }
-        ]
+        [{ text: "好的", onPress: () => router.replace('/(tabs)') }]
       );
-      setIsSubmitting(false);
-    }, 800); // 添加延迟，模拟过渡效果
+    } else {
+      Alert.alert("提交失败", "请稍后再试");
+    }
   };
 
   return (
