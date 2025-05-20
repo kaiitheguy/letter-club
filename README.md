@@ -1,50 +1,78 @@
-# Welcome to your Expo app 👋
+# Letter Club
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 项目简介
 
-## Get started
+Letter Club 是一个基于 React Native 和 Expo 的移动应用程序，提供用户友好的界面和流畅的用户体验。
 
-1. Install dependencies
+## 安装与设置
 
+### 前提条件
+
+- Node.js (推荐 v16+)
+- npm 或 yarn
+- Expo CLI
+
+### 安装步骤
+
+1. 克隆仓库：
+   ```bash
+   git clone https://github.com/yourusername/letter-club.git
+   cd letter-club
+   ```
+
+2. 安装依赖：
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. 启动应用：
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Node.js 兼容性配置
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+本项目使用了一些需要 Node.js 模块的库（如 WebSockets），但 React Native 环境下并不直接支持这些模块。我们通过以下配置解决了这些兼容性问题：
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### Polyfill 配置
 
-## Get a fresh project
+项目中包含了特定平台的 polyfill 文件：
+- `polyfills.ios.js`：iOS 平台的 polyfill
+- `polyfills.android.js`：Android 平台的 polyfill
 
-When you're ready, run:
+这些文件提供了在 React Native 环境中模拟 Node.js 功能所需的全局对象和函数。
 
-```bash
-npm run reset-project
-```
+### Metro 配置
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+`metro.config.js` 文件配置了各种 Node.js 模块的 polyfill，包括：
+- stream
+- crypto
+- http/https
+- url
+- buffer
+- assert
+- 等等...
 
-## Learn more
+## 主要依赖
 
-To learn more about developing your project with Expo, look at the following resources:
+- React Native
+- Expo
+- Supabase (后端服务)
+- React Native URL Polyfill
+- 各种 Node.js 兼容性库
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 常见问题与解决方案
 
-## Join the community
+### WebSocket 相关错误
 
-Join our community of developers creating universal apps.
+如果遇到 WebSocket 相关错误，请确保：
+1. 已正确安装所有 polyfill 依赖
+2. 在应用入口点导入了 polyfill 文件
+3. Metro 配置包含所有必要的 Node.js 模块映射
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Metro 绑定失败
+
+如果遇到 Metro 绑定失败，尝试：
+1. 清除缓存：`npx expo start --clear`
+2. 检查是否缺少依赖
+3. 确认 Metro 配置是否正确
